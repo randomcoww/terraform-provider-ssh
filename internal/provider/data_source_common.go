@@ -12,10 +12,6 @@ var _ datasource.DataSource = &commonDataSource{}
 // commonDataSource defines the data source implementation.
 type commonDataSource struct{}
 
-// commonDataSourceModel describes the data source data model.
-type commonDataSourceModel struct {
-}
-
 func (d *commonDataSource) Metadata(ctx context.Context, req datasource.MetadataRequest, resp *datasource.MetadataResponse) {
 }
 

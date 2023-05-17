@@ -12,6 +12,7 @@ import (
 
 func TestResourceUserCert(t *testing.T) {
 	r.UnitTest(t, r.TestCase{
+		PreCheck:                 func() { testAccPreCheck(t) },
 		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
 		Steps: []r.TestStep{
 			{
@@ -43,7 +44,10 @@ EOT
 						if err != nil {
 							return fmt.Errorf("error parsing cert: %s", err)
 						}
-						cert := pubKey.(*ssh.Certificate)
+						cert, ok := pubKey.(*ssh.Certificate)
+						if !ok {
+							return fmt.Errorf("got wrong type for public key")
+						}
 
 						if expected, got := "testUser", cert.KeyId; got != expected {
 							return fmt.Errorf("incorrect KeyId: %v, wanted %v", got, expected)

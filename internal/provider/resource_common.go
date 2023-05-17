@@ -250,6 +250,10 @@ func (r *commonCert) ImportState(ctx context.Context, req resource.ImportStateRe
 	resource.ImportStatePassthroughID(ctx, path.Root("id"), req, resp)
 }
 
+func (r *commonCert) ModifyPlan(ctx context.Context, req resource.ModifyPlanRequest, res *resource.ModifyPlanResponse) {
+	modifyPlanIfCertificateReadyForRenewal(ctx, &req, res)
+}
+
 func baseCertificate(ctx context.Context, plan *tfsdk.Plan) (*ssh.Certificate, diag.Diagnostics) {
 	var diags diag.Diagnostics
 	template := &ssh.Certificate{
@@ -290,7 +294,9 @@ func baseCertificate(ctx context.Context, plan *tfsdk.Plan) (*ssh.Certificate, d
 	}
 	if !validPrincipals.IsNull() && !validPrincipals.IsUnknown() && len(validPrincipals.Elements()) > 0 {
 		for _, v := range validPrincipals.Elements() {
-			template.ValidPrincipals = append(template.ValidPrincipals, v.(types.String).ValueString())
+			if vstr, ok := v.(types.String); ok {
+				template.ValidPrincipals = append(template.ValidPrincipals, vstr.ValueString())
+			}
 		}
 	}
 
@@ -301,7 +307,9 @@ func baseCertificate(ctx context.Context, plan *tfsdk.Plan) (*ssh.Certificate, d
 	}
 	if !criticalOptions.IsNull() && !criticalOptions.IsUnknown() && len(criticalOptions.Elements()) > 0 {
 		for _, v := range criticalOptions.Elements() {
-			template.Permissions.CriticalOptions[v.(types.String).ValueString()] = ""
+			if vstr, ok := v.(types.String); ok {
+				template.Permissions.CriticalOptions[vstr.ValueString()] = ""
+			}
 		}
 	}
 
@@ -312,7 +320,9 @@ func baseCertificate(ctx context.Context, plan *tfsdk.Plan) (*ssh.Certificate, d
 	}
 	if !extensions.IsNull() && !extensions.IsUnknown() && len(extensions.Elements()) > 0 {
 		for _, v := range extensions.Elements() {
-			template.Permissions.Extensions[v.(types.String).ValueString()] = ""
+			if vstr, ok := v.(types.String); ok {
+				template.Permissions.Extensions[vstr.ValueString()] = ""
+			}
 		}
 	}
 

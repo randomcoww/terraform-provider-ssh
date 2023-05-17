@@ -20,25 +20,6 @@ func (a Algorithm) String() string {
 	return string(a)
 }
 
-// supportedAlgorithms returns a slice of Algorithm currently supported by this provider.
-func supportedAlgorithms() []Algorithm {
-	return []Algorithm{
-		RSA,
-		ECDSA,
-		ED25519,
-	}
-}
-
-// supportedAlgorithmsStr returns the same content of supportedAlgorithms but as a slice of string.
-func supportedAlgorithmsStr() []string {
-	supported := supportedAlgorithms()
-	supportedStr := make([]string, len(supported))
-	for i := range supported {
-		supportedStr[i] = supported[i].String()
-	}
-	return supportedStr
-}
-
 // ECDSACurve represents a type of ECDSA elliptic curve.
 type ECDSACurve string
 
@@ -51,26 +32,6 @@ const (
 
 func (e ECDSACurve) String() string {
 	return string(e)
-}
-
-// supportedECDSACurves returns an array of ECDSACurve currently supported by this provider.
-func supportedECDSACurves() []ECDSACurve {
-	return []ECDSACurve{
-		P224,
-		P256,
-		P384,
-		P521,
-	}
-}
-
-// supportedECDSACurvesStr returns the same content of supportedECDSACurves but as a slice of string.
-func supportedECDSACurvesStr() []string {
-	supported := supportedECDSACurves()
-	supportedStr := make([]string, len(supported))
-	for i := range supported {
-		supportedStr[i] = supported[i].String()
-	}
-	return supportedStr
 }
 
 // PEMPreamble represents the heading used in a PEM-formatted for the "encapsulation boundaries",
@@ -128,25 +89,6 @@ func (p ProxyScheme) String() string {
 	return string(p)
 }
 
-// supportedProxySchemes returns an array of ProxyScheme currently supported by this provider.
-func supportedProxySchemes() []ProxyScheme {
-	return []ProxyScheme{
-		HTTPProxy,
-		HTTPSProxy,
-		SOCKS5Proxy,
-	}
-}
-
-// supportedProxySchemesStr returns the same content of supportedProxySchemes but as a slice of string.
-func supportedProxySchemesStr() []string {
-	supported := supportedProxySchemes()
-	supportedStr := make([]string, len(supported))
-	for i := range supported {
-		supportedStr[i] = string(supported[i])
-	}
-	return supportedStr
-}
-
 // URLScheme represents url schemes supported by resources and data-sources of this provider.
 type URLScheme string
 
@@ -157,22 +99,4 @@ const (
 
 func (p URLScheme) String() string {
 	return string(p)
-}
-
-// supportedURLSchemes returns an array of URLScheme currently supported by this provider.
-func supportedURLSchemes() []URLScheme {
-	return []URLScheme{
-		HTTPSScheme,
-		TLSScheme,
-	}
-}
-
-// supportedURLSchemesStr returns the same content of supportedURLSchemes but as a slice of string.
-func supportedURLSchemesStr() []string {
-	supported := supportedURLSchemes()
-	supportedStr := make([]string, len(supported))
-	for i := range supported {
-		supportedStr[i] = string(supported[i])
-	}
-	return supportedStr
 }
