@@ -1,3 +1,5 @@
+// https://github.com/hashicorp/terraform-provider-tls/blob/main/internal/provider/resource_locally_signed_cert_test.go
+
 package provider
 
 import (
@@ -12,34 +14,17 @@ import (
 
 func TestResourceUserCert(t *testing.T) {
 	r.UnitTest(t, r.TestCase{
-		PreCheck:                 func() { testAccPreCheck(t) },
 		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
+		PreCheck:                 setTimeForTest("2023-01-01T12:00:00Z"),
 		Steps: []r.TestStep{
 			{
-				Config: providerConfig + fmt.Sprintf(`
-					resource "ssh_user_cert" "test1" {
-						ca_private_key_pem = <<EOT
-%s
-EOT
-						public_key_openssh = "%s"
-						validity_period_hours = 600
-						early_renewal_hours = 300
-						key_id = "testUser"
-						valid_principals = [
-							"test1.local",
-							"test2.local",
-						]
-						extensions = [
-							"permit-X11-forwarding",
-							"permit-agent-forwarding",
-						]
-						critical_options = [
-							"permit-port-forwarding",
-							"permit-pty",
-						]
-					}`, inputPrivateKey, inputPublicKeyOpenSSH),
+				Config: userCertConfig(10, 2),
 				Check: r.ComposeAggregateTestCheckFunc(
-					r.TestCheckResourceAttrWith("ssh_user_cert.test1", "cert_authorized_key", func(value string) error {
+					r.TestCheckResourceAttr("ssh_user_cert.test", "ca_key_algorithm", "ECDSA"),
+					r.TestCheckResourceAttr("ssh_user_cert.test", "validity_start_time", "2023-01-01T12:00:00Z"),
+					r.TestCheckResourceAttr("ssh_user_cert.test", "validity_end_time", "2023-01-01T22:00:00Z"),
+					r.TestCheckResourceAttr("ssh_user_cert.test", "ready_for_renewal", "false"),
+					r.TestCheckResourceAttrWith("ssh_user_cert.test", "cert_authorized_key", func(value string) error {
 						pubKey, _, _, _, err := ssh.ParseAuthorizedKey([]byte(value))
 						if err != nil {
 							return fmt.Errorf("error parsing cert: %s", err)
@@ -57,20 +42,12 @@ EOT
 							return fmt.Errorf("incorrect CertType: %v, wanted %v", got, expected)
 						}
 
-						if cert.Signature == nil {
-							return fmt.Errorf("incorrect Signature: %v", cert.Signature)
-						}
-
-						if time.Unix(int64(cert.ValidAfter), 0).After(time.Now()) {
+						if !time.Unix(int64(cert.ValidAfter), 0).Equal(overridableTimeFunc()) {
 							return fmt.Errorf("incorrect ValidAfter: %v", cert.ValidAfter)
 						}
 
-						if time.Unix(int64(cert.ValidBefore), 0).Before(time.Now()) {
+						if expected, got := 10*time.Hour, time.Unix(int64(cert.ValidBefore), 0).Sub(overridableTimeFunc()); got != expected {
 							return fmt.Errorf("incorrect ValidBefore: %v", cert.ValidBefore)
-						}
-
-						if expected, got := 600*time.Hour, time.Unix(int64(cert.ValidBefore), 0).Sub(time.Unix(int64(cert.ValidAfter), 0)); got != expected {
-							return fmt.Errorf("incorrect ttl: expected: %v, actual: %v", expected, got)
 						}
 
 						principals := []string{
@@ -102,6 +79,103 @@ EOT
 			},
 		},
 	})
+}
+
+func TestResourceUserCertRenewalState(t *testing.T) {
+	r.UnitTest(t, r.TestCase{
+		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
+		PreCheck:                 setTimeForTest("2023-01-01T12:00:00Z"),
+		Steps: []r.TestStep{
+			{
+				Config: userCertConfig(10, 2),
+				Check:  r.TestCheckResourceAttr("ssh_user_cert.test", "ready_for_renewal", "false"),
+			},
+			{
+				PreConfig:          setTimeForTest("2023-01-01T21:00:00Z"),
+				RefreshState:       true,
+				ExpectNonEmptyPlan: true,
+				Check:              r.TestCheckResourceAttr("ssh_user_cert.test", "ready_for_renewal", "true"),
+			},
+			{
+				PreConfig: setTimeForTest("2023-01-01T21:00:00Z"),
+				Config:    userCertConfig(10, 2),
+				Check:     r.TestCheckResourceAttr("ssh_user_cert.test", "ready_for_renewal", "false"),
+			},
+		},
+	})
+}
+
+func TestResourceUserCertUpdate(t *testing.T) {
+	var previousCert string
+	r.UnitTest(t, r.TestCase{
+		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
+		PreCheck:                 setTimeForTest("2023-01-01T12:00:00Z"),
+		Steps: []r.TestStep{
+			{
+				Config: userCertConfig(10, 2),
+				Check: r.TestCheckResourceAttrWith("ssh_user_cert.test", "cert_authorized_key", func(value string) error {
+					previousCert = value
+					return nil
+				}),
+			},
+			{
+				PreConfig: setTimeForTest("2023-01-01T19:00:00Z"),
+				Config:    userCertConfig(10, 2),
+				Check: r.TestCheckResourceAttrWith("ssh_user_cert.test", "cert_authorized_key", func(value string) error {
+					if value != previousCert {
+						return fmt.Errorf("certificate updated even though still time until early renewal")
+					}
+					previousCert = value
+					return nil
+				}),
+			},
+			{
+				PreConfig: setTimeForTest("2023-01-01T21:00:00Z"),
+				Config:    userCertConfig(10, 2),
+				Check: r.TestCheckResourceAttrWith("ssh_user_cert.test", "cert_authorized_key", func(value string) error {
+					if value == previousCert {
+						return fmt.Errorf("certificate not updated even though early renewal time has passed")
+					}
+					previousCert = value
+					return nil
+				}),
+			},
+		},
+	})
+}
+
+func setTimeForTest(timeStr string) func() {
+	return func() {
+		overridableTimeFunc = func() time.Time {
+			t, _ := time.Parse(time.RFC3339, timeStr)
+			return t
+		}
+	}
+}
+
+func userCertConfig(validity, earlyRenewal int) string {
+	return providerConfig + fmt.Sprintf(`
+	resource "ssh_user_cert" "test" {
+		ca_private_key_pem = <<EOT
+%s
+EOT
+		public_key_openssh = "%s"
+		validity_period_hours = %d
+		early_renewal_hours = %d
+		key_id = "testUser"
+		valid_principals = [
+			"test1.local",
+			"test2.local",
+		]
+		extensions = [
+			"permit-X11-forwarding",
+			"permit-agent-forwarding",
+		]
+		critical_options = [
+			"permit-port-forwarding",
+			"permit-pty",
+		]
+	}`, inputPrivateKey, inputPublicKeyOpenSSH, validity, earlyRenewal)
 }
 
 const (

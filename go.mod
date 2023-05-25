@@ -1,4 +1,4 @@
-module github.com/hashicorp/terraform-provider-scaffolding-framework
+module github.com/randomcoww/terraform-provider-ssh
 
 go 1.19
 

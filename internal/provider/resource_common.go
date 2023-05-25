@@ -13,6 +13,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/booldefault"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/int64default"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/int64planmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/listplanmodifier"
@@ -21,6 +22,8 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
 	"github.com/hashicorp/terraform-plugin-framework/tfsdk"
 	"github.com/hashicorp/terraform-plugin-framework/types"
+
+	"github.com/randomcoww/terraform-provider-ssh/internal/provider/attribute_plan_modifier_bool"
 )
 
 // commonCert defines the resource implementation.
@@ -38,6 +41,7 @@ type commonCertModel struct {
 	CriticalOptions     types.List   `tfsdk:"critical_options"`
 	Extensions          types.List   `tfsdk:"extensions"`
 	EarlyRenewalHours   types.Int64  `tfsdk:"early_renewal_hours"`
+	ReadyForRenewal     types.Bool   `tfsdk:"ready_for_renewal"`
 	ValidityStartTime   types.String `tfsdk:"validity_start_time"`
 	ValidityEndTime     types.String `tfsdk:"validity_end_time"`
 	CAKeyAlgorithm      types.String `tfsdk:"ca_key_algorithm"`
@@ -126,15 +130,15 @@ func (r *commonCert) Schema(ctx context.Context, req resource.SchemaRequest, res
 					"Also, this advance update can only be performed should the Terraform configuration be applied " +
 					"during the early renewal period. (default: `0`)",
 			},
-			// "ready_for_renewal": schema.BoolAttribute{
-			// 	Computed: true,
-			// 	Default:  booldefault.StaticBool(false),
-			// 	PlanModifiers: []planmodifier.Bool{
-			// 		attribute_plan_modifier_bool.ReadyForRenewal(),
-			// 	},
-			// 	Description: "Is the certificate either expired (i.e. beyond the `validity_period_hours`) " +
-			// 		"or ready for an early renewal (i.e. within the `early_renewal_hours`)?",
-			// },
+			"ready_for_renewal": schema.BoolAttribute{
+				Computed: true,
+				Default:  booldefault.StaticBool(false),
+				PlanModifiers: []planmodifier.Bool{
+					attribute_plan_modifier_bool.ReadyForRenewal(),
+				},
+				Description: "Is the certificate either expired (i.e. beyond the `validity_period_hours`) " +
+					"or ready for an early renewal (i.e. within the `early_renewal_hours`)?",
+			},
 			"validity_start_time": schema.StringAttribute{
 				Computed: true,
 				PlanModifiers: []planmodifier.String{
