@@ -18,11 +18,11 @@ func TestResourceUserCert(t *testing.T) {
 		PreCheck:                 setTimeForTest("2023-01-01T12:00:00Z"),
 		Steps: []r.TestStep{
 			{
-				Config: userCertConfig(10, 2),
+				Config: userCertConfig(1, 0),
 				Check: r.ComposeAggregateTestCheckFunc(
 					r.TestCheckResourceAttr("ssh_user_cert.test", "ca_key_algorithm", "ECDSA"),
 					r.TestCheckResourceAttr("ssh_user_cert.test", "validity_start_time", "2023-01-01T12:00:00Z"),
-					r.TestCheckResourceAttr("ssh_user_cert.test", "validity_end_time", "2023-01-01T22:00:00Z"),
+					r.TestCheckResourceAttr("ssh_user_cert.test", "validity_end_time", "2023-01-01T13:00:00Z"),
 					r.TestCheckResourceAttr("ssh_user_cert.test", "ready_for_renewal", "false"),
 					r.TestCheckResourceAttrWith("ssh_user_cert.test", "cert_authorized_key", func(value string) error {
 						pubKey, _, _, _, err := ssh.ParseAuthorizedKey([]byte(value))
@@ -46,7 +46,7 @@ func TestResourceUserCert(t *testing.T) {
 							return fmt.Errorf("incorrect ValidAfter: %v", cert.ValidAfter)
 						}
 
-						if expected, got := 10*time.Hour, time.Unix(int64(cert.ValidBefore), 0).Sub(overridableTimeFunc()); got != expected {
+						if expected, got := 1*time.Hour, time.Unix(int64(cert.ValidBefore), 0).Sub(overridableTimeFunc()); got != expected {
 							return fmt.Errorf("incorrect ValidBefore: %v", cert.ValidBefore)
 						}
 
