@@ -1,3 +1,5 @@
+// Copyright (c) HashiCorp, Inc.
+
 // https://github.com/hashicorp/terraform-provider-tls/blob/main/internal/provider/attribute_plan_modifier_bool/default_value.go
 
 package attribute_plan_modifier_bool

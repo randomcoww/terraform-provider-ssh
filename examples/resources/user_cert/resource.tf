@@ -1,3 +1,5 @@
+# Copyright (c) HashiCorp, Inc.
+
 resource "ssh_user_cert" "test1" {
   ca_private_key_pem    = <<EOT
 -----BEGIN EC PRIVATE KEY-----

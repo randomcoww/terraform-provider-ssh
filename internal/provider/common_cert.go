@@ -1,3 +1,5 @@
+// Copyright (c) HashiCorp, Inc.
+
 // https://github.com/hashicorp/terraform-provider-tls/blob/main/internal/provider/common_cert.go
 
 package provider
