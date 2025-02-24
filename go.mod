@@ -1,6 +1,7 @@
 module github.com/randomcoww/terraform-provider-ssh
 
 go 1.22.7
+toolchain go1.23.6
 
 require (
 	github.com/hashicorp/copywrite v0.21.0
@@ -10,7 +11,7 @@ require (
 	github.com/hashicorp/terraform-plugin-go v0.26.0
 	github.com/hashicorp/terraform-plugin-log v0.9.0
 	github.com/hashicorp/terraform-plugin-testing v1.11.0
-	golang.org/x/crypto v0.33.0
+	golang.org/x/crypto v0.34.0
 )
 
 require (
