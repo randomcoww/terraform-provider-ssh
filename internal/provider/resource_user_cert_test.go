@@ -64,7 +64,7 @@ func TestResourceUserCert(t *testing.T) {
 							"permit-X11-forwarding":   "",
 							"permit-agent-forwarding": "",
 						}
-						if expected, got := permissions, cert.Permissions.Extensions; !reflect.DeepEqual(got, expected) {
+						if expected, got := permissions, cert.Extensions; !reflect.DeepEqual(got, expected) {
 							return fmt.Errorf("incorrect Permissions.Extensions: expected: %#v actual: %#v", expected, got)
 						}
 
@@ -72,7 +72,7 @@ func TestResourceUserCert(t *testing.T) {
 							"permit-port-forwarding": "",
 							"permit-pty":             "",
 						}
-						if expected, got := criticalOptions, cert.Permissions.CriticalOptions; !reflect.DeepEqual(got, expected) {
+						if expected, got := criticalOptions, cert.CriticalOptions; !reflect.DeepEqual(got, expected) {
 							return fmt.Errorf("incorrect Permissions.CriticalOptions: expected: %#v actual: %#v", expected, got)
 						}
 						return nil

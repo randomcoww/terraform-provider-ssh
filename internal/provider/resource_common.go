@@ -315,7 +315,7 @@ func baseCertificate(ctx context.Context, plan *tfsdk.Plan) (*ssh.Certificate, d
 	if !criticalOptions.IsNull() && !criticalOptions.IsUnknown() && len(criticalOptions.Elements()) > 0 {
 		for k, v := range criticalOptions.Elements() {
 			if vstr, ok := v.(types.String); ok {
-				template.Permissions.CriticalOptions[k] = vstr.ValueString()
+				template.CriticalOptions[k] = vstr.ValueString()
 			}
 		}
 	}
@@ -328,7 +328,7 @@ func baseCertificate(ctx context.Context, plan *tfsdk.Plan) (*ssh.Certificate, d
 	if !extensions.IsNull() && !extensions.IsUnknown() && len(extensions.Elements()) > 0 {
 		for k, v := range extensions.Elements() {
 			if vstr, ok := v.(types.String); ok {
-				template.Permissions.Extensions[k] = vstr.ValueString()
+				template.Extensions[k] = vstr.ValueString()
 			}
 		}
 	}
