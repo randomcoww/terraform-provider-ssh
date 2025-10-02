@@ -63,6 +63,7 @@ func TestResourceUserCert(t *testing.T) {
 						permissions := map[string]string{
 							"permit-X11-forwarding":   "",
 							"permit-agent-forwarding": "",
+							"source-address":          "192.168.1.0/24",
 						}
 						if expected, got := permissions, cert.Extensions; !reflect.DeepEqual(got, expected) {
 							return fmt.Errorf("incorrect Permissions.Extensions: expected: %#v actual: %#v", expected, got)
@@ -71,6 +72,7 @@ func TestResourceUserCert(t *testing.T) {
 						criticalOptions := map[string]string{
 							"permit-port-forwarding": "",
 							"permit-pty":             "",
+							"force-command":          "/usr/bin/id",
 						}
 						if expected, got := criticalOptions, cert.CriticalOptions; !reflect.DeepEqual(got, expected) {
 							return fmt.Errorf("incorrect Permissions.CriticalOptions: expected: %#v actual: %#v", expected, got)
@@ -172,10 +174,12 @@ EOT
 		extensions = {
 			"permit-X11-forwarding"   = ""
 			"permit-agent-forwarding" = ""
+			"source-address"          = "192.168.1.0/24"
 		}
 		critical_options = {
 			"permit-port-forwarding" = ""
 			"permit-pty"             = ""
+			"force-command"          = "/usr/bin/id"
 		}
 	}`, inputPrivateKey, inputPublicKeyOpenSSH, validity, earlyRenewal)
 }
