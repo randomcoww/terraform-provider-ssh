@@ -169,14 +169,14 @@ EOT
 			"test1.local",
 			"test2.local",
 		]
-		extensions = [
-			"permit-X11-forwarding",
-			"permit-agent-forwarding",
-		]
-		critical_options = [
-			"permit-port-forwarding",
-			"permit-pty",
-		]
+		extensions = {
+			"permit-X11-forwarding"   = ""
+			"permit-agent-forwarding" = ""
+		}
+		critical_options = {
+			"permit-port-forwarding" = ""
+			"permit-pty"             = ""
+		}
 	}`, inputPrivateKey, inputPublicKeyOpenSSH, validity, earlyRenewal)
 }
 

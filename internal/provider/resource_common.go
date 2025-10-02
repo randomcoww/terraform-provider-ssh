@@ -19,6 +19,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/int64default"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/int64planmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/listplanmodifier"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/mapplanmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringplanmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
@@ -40,8 +41,8 @@ type commonCertModel struct {
 	ValidityPeriodHours types.Int64  `tfsdk:"validity_period_hours"`
 	KeyID               types.String `tfsdk:"key_id"`
 	ValidPrincipals     types.List   `tfsdk:"valid_principals"`
-	CriticalOptions     types.List   `tfsdk:"critical_options"`
-	Extensions          types.List   `tfsdk:"extensions"`
+	CriticalOptions     types.Map    `tfsdk:"critical_options"`
+	Extensions          types.Map    `tfsdk:"extensions"`
 	EarlyRenewalHours   types.Int64  `tfsdk:"early_renewal_hours"`
 	ReadyForRenewal     types.Bool   `tfsdk:"ready_for_renewal"`
 	ValidityStartTime   types.String `tfsdk:"validity_start_time"`
@@ -99,21 +100,21 @@ func (r *commonCert) Schema(ctx context.Context, req resource.SchemaRequest, res
 				},
 				Description: "List of hostnames to use as subjects of the certificate.",
 			},
-			"critical_options": schema.ListAttribute{
+			"critical_options": schema.MapAttribute{
 				ElementType: types.StringType,
 				Required:    true,
-				PlanModifiers: []planmodifier.List{
-					listplanmodifier.RequiresReplace(),
+				PlanModifiers: []planmodifier.Map{
+					mapplanmodifier.RequiresReplace(),
 				},
-				Description: "List of critical options for certificate usage permissions.",
+				Description: "Map of critical options for certificate usage permissions.",
 			},
-			"extensions": schema.ListAttribute{
+			"extensions": schema.MapAttribute{
 				ElementType: types.StringType,
 				Required:    true,
-				PlanModifiers: []planmodifier.List{
-					listplanmodifier.RequiresReplace(),
+				PlanModifiers: []planmodifier.Map{
+					mapplanmodifier.RequiresReplace(),
 				},
-				Description: "List of extensions for certificate usage permissions.",
+				Description: "Map of extensions for certificate usage permissions.",
 			},
 
 			// Optional
@@ -306,28 +307,28 @@ func baseCertificate(ctx context.Context, plan *tfsdk.Plan) (*ssh.Certificate, d
 		}
 	}
 
-	var criticalOptions types.List
+	var criticalOptions types.Map
 	diags.Append(plan.GetAttribute(ctx, path.Root("critical_options"), &criticalOptions)...)
 	if diags.HasError() {
 		return nil, diags
 	}
 	if !criticalOptions.IsNull() && !criticalOptions.IsUnknown() && len(criticalOptions.Elements()) > 0 {
-		for _, v := range criticalOptions.Elements() {
+		for k, v := range criticalOptions.Elements() {
 			if vstr, ok := v.(types.String); ok {
-				template.Permissions.CriticalOptions[vstr.ValueString()] = ""
+				template.Permissions.CriticalOptions[k] = vstr.ValueString()
 			}
 		}
 	}
 
-	var extensions types.List
+	var extensions types.Map
 	diags.Append(plan.GetAttribute(ctx, path.Root("extensions"), &extensions)...)
 	if diags.HasError() {
 		return nil, diags
 	}
 	if !extensions.IsNull() && !extensions.IsUnknown() && len(extensions.Elements()) > 0 {
-		for _, v := range extensions.Elements() {
+		for k, v := range extensions.Elements() {
 			if vstr, ok := v.(types.String); ok {
-				template.Permissions.Extensions[vstr.ValueString()] = ""
+				template.Permissions.Extensions[k] = vstr.ValueString()
 			}
 		}
 	}
